@@ -1,13 +1,10 @@
-import requests
-from bs4 import BeautifulSoup
 
-#Test Work on web scraping
+import webscraper as web
+
+
 def main():
-    url = 'http://morse-brode.herokuapp.com/'
-    response = requests.get(url)
-    html = response.content
-    soup = BeautifulSoup(html, 'html.parser')
-    print(soup.prettify())
+    ws = web.WebScraper()
+    ws.search('Germany','weimar')
 
 
 if __name__ == "__main__":
