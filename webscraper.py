@@ -1,6 +1,7 @@
 import requests
 import os
 from bs4 import BeautifulSoup
+import pandas
 from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
@@ -24,7 +25,7 @@ class WebScraper:
         self.whandle = None
         self.load(self.home)
         self.access = self.__get_access()
-        print()
+        self.data = pandas.DataFrame(columns={'Title', 'Author(s)', 'Publish Date', 'Database', 'Content'})
 
     def __get_access(self):
         access = ['', '']
@@ -36,14 +37,14 @@ class WebScraper:
     def __identify_db(self):
         # list dbs to draw articles from. Identified by 5 character code
         # e.g. JSTOR = JSTOR and SPRNG = Springer
-        dbs = ['JSTOR', 'EBSCO', 'SPRNG', 'SCIDI', 'KARGR', 'JAMAN', 'JNNPB', 'PROQS', 'WOLSK', 'JSAGE', 'OVIDS', 'ACADO', 'DUKEU', 'TANDF', 'GALEG']
+        dbs = ['JSTOR', 'EBSCO', 'SPRNG', 'SCIDI', 'KARGR', 'JAMAN', 'JNNPB', 'PROQS', 'WOLSK', 'JSAGE', 'OVIDS', 'OXFAC', 'DUKEU', 'TANDF', 'GALEG']
         wait = WebDriverWait(self.driver, 20)
         try:
             ident = wait.until(browser_has_url_element('.libproxy'))
         except TimeoutException:
-            print('UNKNOWN')
+            # print('UNKNOWN')
             return 'UNKNOWN'  #unknown
-        print(ident)
+        # print(ident)
         if ident == 'www-jstor-org':
             return dbs[0]
         elif ident == 'eb.a.ebscohost.com' or ident == 'eb.b.ebscohost.com' or ident == 'openurl-ebscohost-com':
@@ -99,11 +100,39 @@ class WebScraper:
 
             self.driver.switch_to.window(self.whandle)
             self.driver.switch_to.default_content()
+        self.save_data(self.data)
+
+    def save_data(self, df):
+
+        df.to_csv('my_data.csv')
+
     def parse(self):
         cur_db = self.__identify_db()
         if cur_db == 'UNKNOWN' or cur_db[0] == 'X':
             self.driver.close()
+        if cur_db == 'JSTOR':
+            print('In JSTOR')
+        elif cur_db == 'PROQS':
+            self.proqs_read()
+        elif cur_db == 'OXFAC':
+            self.oxfac_read()
 
+    def proqs_read(self):
+        try:
+            wait = WebDriverWait(self.driver, 10)
+            title = wait.until(EC.presence_of_element_located((By.ID, 'documentTitle'))).text
+            text = wait.until(EC.presence_of_element_located((By.TAG_NAME, 'text'))).text
+        except TimeoutException:
+            print('ERROR: PROQS: CANNOT LOCATE NEEDED ELEMENTS')
+            return None
+    def oxfac_read(self):
+        try:
+            wait = WebDriverWait(self.driver, 10)
+            title = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'wi-article-title'))).text
+            text = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'widget-ArticleFulltext'))).text
+        except TimeoutException:
+            print('ERROR: OXFAC : CANNOT LOCATE NEEDED ELEMENTS')
+            return None
 
     def load(self, url):
         self.driver.get(url)
@@ -137,6 +166,7 @@ class browser_has_url_element:
             return url[8:s]
         except ValueError:
             return False
+
 
 
 
