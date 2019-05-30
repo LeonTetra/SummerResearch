@@ -1,4 +1,5 @@
 import requests
+import os
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
@@ -14,55 +15,61 @@ class WebScraper:
     # webscraper will only target those results
     # results are stored in a list of JSON
     def __init__(self, topic, query):
-        logged_in = False
-        driver = webdriver.Firefox()
-        home = ("https://librarysearch.temple.edu/articles?f[lang][]=eng&f[rtype][]=articles&f[tlevel][]="
-                "peer_reviewed&f[tlevel][]=online_resources&f[topic][]=" + topic + "&per_page=100&q="+query)
-        driver.get(home)
-        window_handle = driver.current_window_handle
-        print(driver.current_window_handle)
-        btns_onl = driver.find_elements_by_id("online_button")
+        self.topic = topic
+        self.query = query
+        self.logged_in = False
+        self.driver = webdriver.Firefox()
+        self.home = ("https://librarysearch.temple.edu/articles?f[lang][]=eng&f[rtype][]=articles&f[tlevel][]="
+                "peer_reviewed&f[tlevel][]=online_resources&f[topic][]=" + topic + "&per_page=10&q="+query)
+        self.whandle = None
+        self.load(self.home)
+        self.access = self.__get_access()
+        print()
+
+    def __get_access(self):
+        access = ['', '']
+        with open('access.txt', 'r') as f:
+            access[0] = (f.readline()).strip('\n')
+            access[1] = (f.readline()).strip('\n')
+        return access
+
+    def search(self):
+        btns_onl = self.driver.find_elements_by_id("online_button")
         for i in btns_onl:
             i.click()
-        iframes = driver.find_elements_by_tag_name('iframe')
-
-        cookies = driver.get_cookies()
-
+        iframes = self.driver.find_elements_by_tag_name('iframe')
         for i in iframes:
-            ActionChains(driver).move_to_element(i)
-            driver.switch_to.frame(i)
-            lnks = driver.find_elements_by_tag_name('a')
+            self.driver.switch_to.frame(i)
+            lnks = self.driver.find_elements_by_tag_name('a')
             if len(lnks) < 1:
                 print('something up')
             else:
-                print(lnks[2].text)
                 lnks[2].send_keys(Keys.RETURN)
-                while len(driver.window_handles) < 2:
+                while len(self.driver.window_handles) < 2:
                     continue
-            print(driver.window_handles)
-            driver.switch_to.window(driver.window_handles[-1])
+            self.driver.switch_to.window(self.driver.window_handles[-1])
+            if not self.logged_in:
+                self.logged_in = self.login()
+            self.driver.switch_to.window(self.whandle)
+            self.driver.switch_to.default_content()
 
-            if not logged_in:
-                print(driver.current_window_handle)
-                self.login(driver)
-                logged_in = True
-            driver.switch_to.window(window_handle)
-            driver.switch_to.default_content()
+    def load(self, url):
+        self.driver.get(url)
+        self.whandle = self.driver.current_window_handle
 
-    def login(self, driver):
-        username = 'tug04599'
-        password = 'Dibriczalt00'
-        # inp_user = driver.find_element_by_id('username')
-        # inp_pass = driver.find_element_by_id('password')
+    def login(self):
+        username = self.access[0]
+        password = self.access[1]
         try:
-            inp_user = WebDriverWait(driver, 10).until(
+            inp_user = WebDriverWait(self.driver, 10).until(
                 EC.presence_of_element_located((By.ID, "username"))
             )
-            inp_pass = WebDriverWait(driver, 10).until(
+            inp_pass = WebDriverWait(self.driver, 10).until(
                 EC.presence_of_element_located((By.ID, "password"))
             )
         finally:
             inp_user.send_keys(username)
             inp_pass.send_keys(password)
-        driver.find_element_by_tag_name('button').click()
+        self.driver.find_element_by_tag_name('button').click()
+        return True
 
