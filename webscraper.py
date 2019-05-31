@@ -25,9 +25,17 @@ class WebScraper:
         self.whandle = None
         self.load(self.home)
         self.access = self.__get_access()
-        self.data = pandas.DataFrame(columns={'Title', 'Author(s)', 'Publish Date', 'Database', 'Content'})
+        self.reader = DatabaseReader()
+        self.data = {
+            'Title': [],
+            'Author': [],
+            'Date Published': [],
+            'Database': [],
+            'Content': []
+        }
 
-    def __get_access(self):
+    @staticmethod
+    def __get_access():
         access = ['', '']
         with open('access.txt', 'r') as f:
             access[0] = (f.readline()).strip('\n')
@@ -86,12 +94,11 @@ class WebScraper:
         for i in iframes:
             self.driver.switch_to.frame(i)
             lnks = self.driver.find_elements_by_tag_name('a')
-            if len(lnks) < 1:
-                print('something up')
-            else:
-                lnks[2].send_keys(Keys.RETURN)
-                while len(self.driver.window_handles) < 2:
-                    continue
+            while len(lnks) < 1:
+                continue
+            lnks[2].send_keys(Keys.RETURN)
+            while len(self.driver.window_handles) < 2:
+                continue
             self.driver.switch_to.window(self.driver.window_handles[1])
             if not self.logged_in:
                 self.logged_in = self.login()
@@ -102,37 +109,61 @@ class WebScraper:
             self.driver.switch_to.default_content()
         self.save_data(self.data)
 
-    def save_data(self, df):
+    def quit(self):
+        self.driver.quit()
 
-        df.to_csv('my_data.csv')
+    def save_data(self, df):
+        print(self.data)
 
     def parse(self):
         cur_db = self.__identify_db()
         if cur_db == 'UNKNOWN' or cur_db[0] == 'X':
-            self.driver.close()
-        if cur_db == 'JSTOR':
-            print('In JSTOR')
-        elif cur_db == 'PROQS':
-            self.proqs_read()
-        elif cur_db == 'OXFAC':
-            self.oxfac_read()
+            print('unk')
+        else:
+            result = self.reader.read(self.driver, cur_db)
+            if result is not None:
+                self.append_to_data(result)
+        self.driver.close()
 
-    def proqs_read(self):
-        try:
-            wait = WebDriverWait(self.driver, 10)
-            title = wait.until(EC.presence_of_element_located((By.ID, 'documentTitle'))).text
-            text = wait.until(EC.presence_of_element_located((By.TAG_NAME, 'text'))).text
-        except TimeoutException:
-            print('ERROR: PROQS: CANNOT LOCATE NEEDED ELEMENTS')
-            return None
-    def oxfac_read(self):
-        try:
-            wait = WebDriverWait(self.driver, 10)
-            title = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'wi-article-title'))).text
-            text = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'widget-ArticleFulltext'))).text
-        except TimeoutException:
-            print('ERROR: OXFAC : CANNOT LOCATE NEEDED ELEMENTS')
-            return None
+    # def proqs_read(self):
+    #     try:
+    #         wait = WebDriverWait(self.driver, 10)
+    #         title = wait.until(EC.presence_of_element_located((By.ID, 'documentTitle')))
+    #         text = wait.until(EC.presence_of_element_located((By.TAG_NAME, 'text')))
+    #         title = wait.until(text_loaded(2, title))
+    #         text = wait.until(text_loaded(5, text))
+    #         info = self.driver.find_elements_by_class_name('titleAuthorETC')
+    #         info_str = ''
+    #         for i in info:
+    #             info_str += i.text
+    #         author = info_str[0:info_str.index('.')]
+    #         date = info_str[info_str.index('(')+1:info_str.index(')')]
+    #         self.append_to_data(Result(title=title, author=author, db="OXFAC", content=text, date=date))
+    #     except TimeoutException:
+    #         print('ERROR: PROQS: CANNOT LOCATE NEEDED ELEMENTS')
+    #         return None
+
+    # def oxfac_read(self):
+    #     try:
+    #         wait = WebDriverWait(self.driver, 10)
+    #         title = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'wi-article-title'))).text
+    #         text = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'widget-ArticleFulltext'))).text
+    #         date = self.driver.find_element_by_class_name('citation-date').text
+    #         auths = self.driver.find_elements_by_class_name('linked-name')
+    #         authors = []
+    #         for a in auths:
+    #             authors.append(a.text)
+    #         self.append_to_data(Result(title=title, author=authors, db="OXFAC", content=text, date=date))
+    #     except TimeoutException:
+    #         print('ERROR: OXFAC : CANNOT LOCATE NEEDED ELEMENTS')
+    #         return None
+
+    def append_to_data(self, s):
+        self.data['Title'].append(s.title)
+        self.data['Content'].append(s.content)
+        self.data['Database'].append(s.db)
+        self.data['Author'].append(s.author)
+        self.data['Date Published'].append(s.date)
 
     def load(self, url):
         self.driver.get(url)
@@ -155,6 +186,62 @@ class WebScraper:
         return True
 
 
+class Result:
+    def __init__(self, title='', author='', db='', date='', content=''):
+        self.title = title
+        self.author = author
+        self.db = db
+        self.date = date
+        self.content = content
+
+
+class DatabaseReader:
+    def read(self, driver, db_code):
+        try:
+            wait = WebDriverWait(driver, 10)
+            result = self.__read(driver, wait, db_code)
+            return result
+        except TimeoutException:
+            print('ERROR: ' + db_code + ': CANNOT LOCATE NEEDED ELEMENTS')
+            return None
+
+    def __read(self, driver, wait, db_code):
+        if db_code == 'PROQS':
+            return self.__read_proqs(driver, wait)
+        elif db_code == 'OXFAC':
+            return self.__read_oxfac(driver, wait)
+        else:
+            print(db_code + ' currently not supported')
+            return None
+            #raise RuntimeError('Database Not Supported')
+
+    @staticmethod
+    def __read_proqs(driver, wait):
+        title = wait.until(EC.presence_of_element_located((By.ID, 'documentTitle')))  #
+        text = wait.until(EC.presence_of_element_located((By.TAG_NAME, 'text')))  #
+        title = wait.until(text_loaded(2, title))  #
+        text = wait.until(text_loaded(5, text))  #
+        info = driver.find_elements_by_class_name('titleAuthorETC')  #
+        info_str = ''  #
+        for i in info:  #
+            info_str += i.text  #
+        author = info_str[0:info_str.index('.')]  #
+        date = info_str[info_str.index('(') + 1:info_str.index(')')]  #
+        return Result(title=title, author=author, date=date, content=text, db='PROQS')
+
+    @staticmethod
+    def __read_oxfac(driver, wait):
+            title = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'wi-article-title'))).text
+            text = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'widget-ArticleFulltext'))).text
+            date = driver.find_element_by_class_name('citation-date').text
+            auths = driver.find_elements_by_class_name('linked-name')
+            authors = []
+            text = str(text).replace('\n', '').replace('\t', '  ')
+            for a in auths:
+                authors.append(a.text)
+            return Result(title=title, author=authors, db="OXFAC", content=text, date=date)
+
+
 class browser_has_url_element:
     def __init__(self, expected):
         self.expected = expected
@@ -168,7 +255,16 @@ class browser_has_url_element:
             return False
 
 
-
+class text_loaded:
+    def __init__(self, expected, element):
+        self.expected = expected
+        self.element = element
+    def __call__(self, driver):
+        length = len(self.element.text)
+        if length < self.expected:
+            return False
+        else:
+            return self.element.text
 
 # class element_has_css_class(object):
 #     """An expectation for checking that an element has a particular css class.
