@@ -21,7 +21,7 @@ class WebScraper:
         self.logged_in = False
         self.driver = webdriver.Firefox()
         self.home = ("https://librarysearch.temple.edu/articles?f[lang][]=eng&f[rtype][]=articles&f[tlevel][]="
-                "peer_reviewed&f[tlevel][]=online_resources&f[topic][]=" + topic + "&per_page=10&q="+query)
+                "peer_reviewed&f[tlevel][]=online_resources&f[topic][]=" + topic + "&per_page=100&q="+query)
         self.whandle = None
         self.load(self.home)
         self.access = self.__get_access()
@@ -177,6 +177,8 @@ class DatabaseReader:
             return self.__read_sprng(driver, wait)
         elif db_code == 'SCIDI':
             return self.__read_scidi(driver, wait)
+        elif db_code == 'KARGR':
+            return self.__read_kargr(driver, wait)
         elif db_code == 'PROQS':
             return self.__read_proqs(driver, wait)
         elif db_code == 'OXFAC':
@@ -275,9 +277,19 @@ class DatabaseReader:
         authors = []
         for a in auths:
             authors.append(a.text)
-        text = driver.find_element_by_id('body').text
+        text = wait.until(EC.presence_of_element_located((By.ID, 'body'))).text
         return Result(title=title, author=authors, db="SCIDI", content=text, date=date)
 
+    @staticmethod
+    def __read_kargr(driver, wait):
+        title = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'abstractbig'))).text
+        date = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'adetails'))).text
+        author = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'autoren'))).text
+        text = driver.find_element_by_id('fulltext').text
+        text = str(text).replace('\n', '').replace('\t', '  ')
+        date = date[str(date).index('Published online: ')+len('Published Online: '):]
+        date = date[:str(date).index('\n')]
+        return Result(title=title, author=author, db="KARGR", content=text, date=date)
 
 class browser_has_url_element:
     def __init__(self, expected):
