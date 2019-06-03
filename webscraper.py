@@ -81,7 +81,7 @@ class WebScraper:
             return dbs[12]
         elif ident == 'www-tandfonline-com':
             return dbs[13]
-        elif ident == 'o.galegroup.com' or ident == 'i.galegroup.com':
+        elif ident == 'o.galegroup.com':
             return dbs[14]
         else:
             return 'X : DATABASE OR JOURNAL NOT LISTED'
@@ -124,39 +124,6 @@ class WebScraper:
             if result is not None:
                 self.append_to_data(result)
         self.driver.close()
-
-    # def proqs_read(self):
-    #     try:
-    #         wait = WebDriverWait(self.driver, 10)
-    #         title = wait.until(EC.presence_of_element_located((By.ID, 'documentTitle')))
-    #         text = wait.until(EC.presence_of_element_located((By.TAG_NAME, 'text')))
-    #         title = wait.until(text_loaded(2, title))
-    #         text = wait.until(text_loaded(5, text))
-    #         info = self.driver.find_elements_by_class_name('titleAuthorETC')
-    #         info_str = ''
-    #         for i in info:
-    #             info_str += i.text
-    #         author = info_str[0:info_str.index('.')]
-    #         date = info_str[info_str.index('(')+1:info_str.index(')')]
-    #         self.append_to_data(Result(title=title, author=author, db="OXFAC", content=text, date=date))
-    #     except TimeoutException:
-    #         print('ERROR: PROQS: CANNOT LOCATE NEEDED ELEMENTS')
-    #         return None
-
-    # def oxfac_read(self):
-    #     try:
-    #         wait = WebDriverWait(self.driver, 10)
-    #         title = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'wi-article-title'))).text
-    #         text = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'widget-ArticleFulltext'))).text
-    #         date = self.driver.find_element_by_class_name('citation-date').text
-    #         auths = self.driver.find_elements_by_class_name('linked-name')
-    #         authors = []
-    #         for a in auths:
-    #             authors.append(a.text)
-    #         self.append_to_data(Result(title=title, author=authors, db="OXFAC", content=text, date=date))
-    #     except TimeoutException:
-    #         print('ERROR: OXFAC : CANNOT LOCATE NEEDED ELEMENTS')
-    #         return None
 
     def append_to_data(self, s):
         self.data['Title'].append(s.title)
@@ -206,14 +173,23 @@ class DatabaseReader:
             return None
 
     def __read(self, driver, wait, db_code):
-        if db_code == 'PROQS':
+        if db_code == 'SPRNG':
+            return self.__read_sprng(driver, wait)
+        elif db_code == 'SCIDI':
+            return self.__read_scidi(driver, wait)
+        elif db_code == 'PROQS':
             return self.__read_proqs(driver, wait)
         elif db_code == 'OXFAC':
             return self.__read_oxfac(driver, wait)
+        elif db_code == 'JSAGE':
+            return self.__read_jsage(driver, wait)
+        elif db_code == 'TANDF':
+            return self.__read_tandf(driver, wait)
+        elif db_code == 'GALEG':
+            return self.__read_galeg(driver, wait)
         else:
             print(db_code + ' currently not supported')
             return None
-            #raise RuntimeError('Database Not Supported')
 
     @staticmethod
     def __read_proqs(driver, wait):
@@ -234,12 +210,73 @@ class DatabaseReader:
             title = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'wi-article-title'))).text
             text = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'widget-ArticleFulltext'))).text
             date = driver.find_element_by_class_name('citation-date').text
+            text = str(text).replace('\n', '').replace('\t', '  ')
             auths = driver.find_elements_by_class_name('linked-name')
             authors = []
-            text = str(text).replace('\n', '').replace('\t', '  ')
             for a in auths:
                 authors.append(a.text)
             return Result(title=title, author=authors, db="OXFAC", content=text, date=date)
+
+    @staticmethod
+    def __read_tandf(driver, wait):
+        title = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'NLM_article-title'))).text
+        text = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'article'))).text
+        date = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'itemPageRangeHistory'))).text
+        author = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'entryAuthor'))).text
+        date = date[str(date).index(':')+2:]
+        text = str(text).replace('\n', '').replace('\t', '  ')
+        return Result(title=title, author=author, db="TANDF", content=text, date=date)
+
+    @staticmethod
+    def __read_galeg(driver, wait):
+        title = wait.until(EC.presence_of_element_located((By.ID, 'docSummary-title'))).text
+        text = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'document-text'))).text
+        date = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'doc-pub-details'))).text
+        author = wait.until(EC.presence_of_element_located((By.ID, 'docSummary-authors'))).text
+        date = date[str(date).index('(') + 1: str(date).index(')')]
+        text = str(text).replace('\n', '').replace('\t', '  ')
+        return Result(title=title, author=author, db="GALEG", content=text, date=date)
+
+    @staticmethod
+    def __read_jsage(driver, wait):
+        title = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'publicationContentTitle'))).text
+        text = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'article'))).text
+        date = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'publicationContentEpubDate'))).text
+        author = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'entryAuthor'))).text
+        date = date[str(date).index('Published ') + 10:]
+        text = str(text).replace('\n', '').replace('\t', '  ')
+        return Result(title=title, author=author, db="JSAGE", content=text, date=date)
+
+    @staticmethod
+    def __read_sprng(driver, wait):
+        title = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'ArticleTitle'))).text
+        date = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'article-dates__first-online'))).text
+        auths = driver.find_elements_by_class_name('authors__name')
+        authors = []
+        for a in auths:
+            authors.append(a.text)
+        texts = driver.find_elements_by_class_name('Para')
+        text =''
+        for t in texts:
+            text += t.text
+        return Result(title=title, author=authors, db="SPRNG", content=text, date=date)
+
+    @staticmethod
+    def __read_scidi(driver, wait):
+        if '/search/' in str(driver.current_url):
+            article = wait.until(EC.presence_of_element_located((By.ID, 'aa-srp-result-list-title-1')))
+            article.click()
+            show_dets = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'show-hide-details')))
+            show_dets.click()
+        title = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'title-text'))).text
+        date = driver.find_element_by_tag_name('p').text
+        auths = driver.find_elements_by_class_name('author')
+        del auths[-1]
+        authors = []
+        for a in auths:
+            authors.append(a.text)
+        text = driver.find_element_by_id('body').text
+        return Result(title=title, author=authors, db="SCIDI", content=text, date=date)
 
 
 class browser_has_url_element:
