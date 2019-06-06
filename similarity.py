@@ -5,4 +5,5 @@ class SimilarityIndex:
         self.data = data
 
     def submit_to_check(self, result=None):
-        print('not done yet')
+        test = self.data['Content'][1]
+        wb = su.BagOfWords(test)

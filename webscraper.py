@@ -167,6 +167,9 @@ class DatabaseReader:
         except TimeoutException:
             print('ERROR: ' + db_code + ': CANNOT LOCATE NEEDED ELEMENTS')
             return None
+        except Exception:
+            print('ERROR: ' + db_code + ': SOME OTHER EXCEPTION OCCURED')
+            return None
 
     def __read(self, driver, wait, db_code):
         if db_code == 'SPRNG':
@@ -201,6 +204,7 @@ class DatabaseReader:
             info_str += i.text  #
         author = info_str[0:info_str.index('.')]  #
         date = info_str[info_str.index('(') + 1:info_str.index(')')]  #
+        text = str(text).replace('\n', ' ').replace('\t', '  ')
         return su.Result(title=title, author=author, date=date, content=text, db='PROQS')
 
     @staticmethod
@@ -208,7 +212,7 @@ class DatabaseReader:
             title = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'wi-article-title'))).text
             text = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'widget-ArticleFulltext'))).text
             date = driver.find_element_by_class_name('citation-date').text
-            text = str(text).replace('\n', '').replace('\t', '  ')
+            text = str(text).replace('\n', ' ').replace('\t', '  ')
             auths = driver.find_elements_by_class_name('linked-name')
             authors = []
             for a in auths:
@@ -222,7 +226,7 @@ class DatabaseReader:
         date = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'itemPageRangeHistory'))).text
         author = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'entryAuthor'))).text
         date = date[str(date).index(':')+2:]
-        text = str(text).replace('\n', '').replace('\t', '  ')
+        text = str(text).replace('\n', ' ').replace('\t', '  ')
         return su.Result(title=title, author=author, db="TANDF", content=text, date=date)
 
     @staticmethod
@@ -232,7 +236,7 @@ class DatabaseReader:
         date = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'doc-pub-details'))).text
         author = wait.until(EC.presence_of_element_located((By.ID, 'docSummary-authors'))).text
         date = date[str(date).index('(') + 1: str(date).index(')')]
-        text = str(text).replace('\n', '').replace('\t', '  ')
+        text = str(text).replace('\n', ' ').replace('\t', '  ')
         return su.Result(title=title, author=author, db="GALEG", content=text, date=date)
 
     @staticmethod
@@ -242,7 +246,7 @@ class DatabaseReader:
         date = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'publicationContentEpubDate'))).text
         author = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'entryAuthor'))).text
         date = date[str(date).index('Published ') + 10:]
-        text = str(text).replace('\n', '').replace('\t', '  ')
+        text = str(text).replace('\n', ' ').replace('\t', '  ')
         return su.Result(title=title, author=author, db="JSAGE", content=text, date=date)
 
     @staticmethod
@@ -257,6 +261,7 @@ class DatabaseReader:
         text =''
         for t in texts:
             text += t.text
+        text = str(text).replace('\n', ' ').replace('\t', '  ')
         return su.Result(title=title, author=authors, db="SPRNG", content=text, date=date)
 
     @staticmethod
@@ -267,6 +272,7 @@ class DatabaseReader:
             show_dets = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'show-hide-details')))
             show_dets.click()
         title = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'title-text'))).text
+
         date = driver.find_element_by_tag_name('p').text
         auths = driver.find_elements_by_class_name('author')
         del auths[-1]
@@ -274,6 +280,7 @@ class DatabaseReader:
         for a in auths:
             authors.append(a.text)
         text = wait.until(EC.presence_of_element_located((By.ID, 'body'))).text
+        text = str(text).replace('\n', ' ').replace('\t', '  ')
         return su.Result(title=title, author=authors, db="SCIDI", content=text, date=date)
 
     @staticmethod
@@ -282,7 +289,7 @@ class DatabaseReader:
         date = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'adetails'))).text
         author = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'autoren'))).text
         text = driver.find_element_by_id('fulltext').text
-        text = str(text).replace('\n', '').replace('\t', '  ')
+        text = str(text).replace('\n', ' ').replace('\t', '  ')
         date = date[str(date).index('Published online: ')+len('Published Online: '):]
         date = date[:str(date).index('\n')]
         return su.Result(title=title, author=author, db="KARGR", content=text, date=date)

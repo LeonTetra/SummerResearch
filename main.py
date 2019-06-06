@@ -7,9 +7,10 @@ def main():
     if not ws.load_data():
         ws.search()
         ws.save_data()
+    ws.quit()
     s = sim.SimilarityIndex(ws.data)
     s.submit_to_check()
-    ws.quit()
+
 
 
 if __name__ == "__main__":

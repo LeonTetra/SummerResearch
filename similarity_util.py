@@ -14,5 +14,8 @@ class BagOfWords:
         self.word_bag = self.__create_word_bag(words)
 
     def __create_word_bag(self, words):
-        for i in words:
-            print(i)
+        split = str(words).split(' ')
+        count = 0
+        for i in split:
+            print(count, i)
+            count += 1
