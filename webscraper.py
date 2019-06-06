@@ -1,9 +1,6 @@
-import requests
-import os
-from bs4 import BeautifulSoup
-import pandas
+import pickle as pc
+import similarity_util as su
 from selenium import webdriver
-from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -107,13 +104,21 @@ class WebScraper:
 
             self.driver.switch_to.window(self.whandle)
             self.driver.switch_to.default_content()
-        self.save_data(self.data)
 
     def quit(self):
         self.driver.quit()
 
-    def save_data(self, df):
-        print(self.data)
+    def save_data(self):
+        with open('data.pc', 'wb') as f:
+            pc.dump(self.data, f)
+
+    def load_data(self):
+        try:
+            with open('data.pc', 'rb') as f:
+                self.data = pc.load(f)
+            return True
+        except FileNotFoundError:
+            return False
 
     def parse(self):
         cur_db = self.__identify_db()
@@ -151,15 +156,6 @@ class WebScraper:
             inp_pass.send_keys(password)
         self.driver.find_element_by_tag_name('button').click()
         return True
-
-
-class Result:
-    def __init__(self, title='', author='', db='', date='', content=''):
-        self.title = title
-        self.author = author
-        self.db = db
-        self.date = date
-        self.content = content
 
 
 class DatabaseReader:
@@ -205,7 +201,7 @@ class DatabaseReader:
             info_str += i.text  #
         author = info_str[0:info_str.index('.')]  #
         date = info_str[info_str.index('(') + 1:info_str.index(')')]  #
-        return Result(title=title, author=author, date=date, content=text, db='PROQS')
+        return su.Result(title=title, author=author, date=date, content=text, db='PROQS')
 
     @staticmethod
     def __read_oxfac(driver, wait):
@@ -217,7 +213,7 @@ class DatabaseReader:
             authors = []
             for a in auths:
                 authors.append(a.text)
-            return Result(title=title, author=authors, db="OXFAC", content=text, date=date)
+            return su.Result(title=title, author=authors, db="OXFAC", content=text, date=date)
 
     @staticmethod
     def __read_tandf(driver, wait):
@@ -227,7 +223,7 @@ class DatabaseReader:
         author = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'entryAuthor'))).text
         date = date[str(date).index(':')+2:]
         text = str(text).replace('\n', '').replace('\t', '  ')
-        return Result(title=title, author=author, db="TANDF", content=text, date=date)
+        return su.Result(title=title, author=author, db="TANDF", content=text, date=date)
 
     @staticmethod
     def __read_galeg(driver, wait):
@@ -237,7 +233,7 @@ class DatabaseReader:
         author = wait.until(EC.presence_of_element_located((By.ID, 'docSummary-authors'))).text
         date = date[str(date).index('(') + 1: str(date).index(')')]
         text = str(text).replace('\n', '').replace('\t', '  ')
-        return Result(title=title, author=author, db="GALEG", content=text, date=date)
+        return su.Result(title=title, author=author, db="GALEG", content=text, date=date)
 
     @staticmethod
     def __read_jsage(driver, wait):
@@ -247,7 +243,7 @@ class DatabaseReader:
         author = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'entryAuthor'))).text
         date = date[str(date).index('Published ') + 10:]
         text = str(text).replace('\n', '').replace('\t', '  ')
-        return Result(title=title, author=author, db="JSAGE", content=text, date=date)
+        return su.Result(title=title, author=author, db="JSAGE", content=text, date=date)
 
     @staticmethod
     def __read_sprng(driver, wait):
@@ -261,7 +257,7 @@ class DatabaseReader:
         text =''
         for t in texts:
             text += t.text
-        return Result(title=title, author=authors, db="SPRNG", content=text, date=date)
+        return su.Result(title=title, author=authors, db="SPRNG", content=text, date=date)
 
     @staticmethod
     def __read_scidi(driver, wait):
@@ -278,7 +274,7 @@ class DatabaseReader:
         for a in auths:
             authors.append(a.text)
         text = wait.until(EC.presence_of_element_located((By.ID, 'body'))).text
-        return Result(title=title, author=authors, db="SCIDI", content=text, date=date)
+        return su.Result(title=title, author=authors, db="SCIDI", content=text, date=date)
 
     @staticmethod
     def __read_kargr(driver, wait):
@@ -289,7 +285,7 @@ class DatabaseReader:
         text = str(text).replace('\n', '').replace('\t', '  ')
         date = date[str(date).index('Published online: ')+len('Published Online: '):]
         date = date[:str(date).index('\n')]
-        return Result(title=title, author=author, db="KARGR", content=text, date=date)
+        return su.Result(title=title, author=author, db="KARGR", content=text, date=date)
 
 class browser_has_url_element:
     def __init__(self, expected):

@@ -1,11 +1,14 @@
 
 import webscraper as web
-
+import similarity as sim
 
 def main():
     ws = web.WebScraper('Germany', 'weimar')
-    ws.search()
-    print(ws.data)
+    if not ws.load_data():
+        ws.search()
+        ws.save_data()
+    s = sim.SimilarityIndex(ws.data)
+    s.submit_to_check()
     ws.quit()
 
 
