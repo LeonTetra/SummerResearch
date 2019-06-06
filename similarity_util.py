@@ -16,6 +16,5 @@ class BagOfWords:
     def __create_word_bag(self, words):
         split = str(words).split(' ')
         count = 0
-        for i in split:
-            print(count, i)
-            count += 1
+        bag = [];
+        bag.append(split)
