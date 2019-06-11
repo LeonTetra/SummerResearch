@@ -6,7 +6,7 @@ class SimilarityIndex:
 
     def submit_to_check(self, result):
         vocab = su.Vocabulary(self.data['Content'])
-        wb = vocab.create_bag_of_words(result['Content'])
+        wb = vocab.create_bag_of_words(result.content)
         print(result.title, ' Results')
         print('hits: ', hits)
         print('misees: ', misses)
