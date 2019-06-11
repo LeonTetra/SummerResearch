@@ -13,6 +13,13 @@ class BagOfWords:
     def __init__(self, words):
         self.word_bag = self.__create_word_bag(words)
 
+    def __index__(self):
+        return self.word_bag.__index__()
+
+    def __iter__(self):
+        return self.word_bag.__iter__()
+    def length(self):
+        return len(self.word_bag[0])
     def __create_word_bag(self, words):
         split = words.split(' ')
         length = len(split)
