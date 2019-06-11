@@ -11,13 +11,17 @@ class Result:
 
 class Vocabulary:
     def __init__(self, sentences):
+        sentences = ["Machine learning is great", "Natural Language Processing is a complex field",
+                     "Natural Language Processing is used in machine learning"]
+
         from sklearn.feature_extraction.text import CountVectorizer
         self.vectorizer = CountVectorizer(analyzer="word", tokenizer=None, preprocessor=None, stop_words=None,
-                                     max_features=5000)
+                                     max_features=5000000)
         train_data_features = self.vectorizer.fit_transform(sentences)
+        print()
 
     def create_bag_of_words(self, text):
-        return self.vectorizer.transform(["Machine learning is great"]).toarray()
+        return self.vectorizer.transform(text).toarray()
 
 
 # These functions were taken from insightsbot.com
