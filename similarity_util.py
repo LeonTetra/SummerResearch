@@ -11,18 +11,21 @@ class Result:
 
 class Vocabulary:
     def __init__(self, sentences):
-        sentences = ["Machine learning is great", "Natural Language Processing is a complex field",
-                     "Natural Language Processing is used in machine learning"]
-
         from sklearn.feature_extraction.text import CountVectorizer
         self.vectorizer = CountVectorizer(analyzer="word", tokenizer=None, preprocessor=None, stop_words=None,
-                                     max_features=5000000)
+                                     max_features=5000)
         train_data_features = self.vectorizer.fit_transform(sentences)
-        print()
 
     def create_bag_of_words(self, text):
         return self.vectorizer.transform(text).toarray()
 
+
+def find_index(wordbag):
+    tuples = []
+    for i in range(len(wordbag[0])):
+        if wordbag[0][i] > 0:
+            tuples.append([i, wordbag[0][i]])
+    return tuples
 
 # These functions were taken from insightsbot.com
 # Entry titled "Bag of Words Algorithm in Python Introduction"
