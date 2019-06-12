@@ -3,10 +3,21 @@ import similarity_util as su
 class SimilarityIndex:
     def __init__(self, data):
         self.data = data
+        self.vocabularies = self.build_vocabularies()
 
     def submit_to_check(self, result):
-        vocab = su.Vocabulary(self.data['Content'])
-        wb = vocab.create_bag_of_words([result.content])
-        print(result.title, ' Results')
-        print(su.find_index(wb))
+        wordbags = []
+        for i in self.vocabularies:
+            wordbags.append(i.create_bag_of_words([result.content]))
+        for i in wordbags:
+            if i[0].any():
+                print(su.find_index(i))
+            print()
+            print()
         print()
+
+    def build_vocabularies(self):
+        vocabs = []
+        for i in self.data['Content']:
+            vocabs.append(su.Vocabulary([i]))
+        return vocabs
