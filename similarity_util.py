@@ -27,6 +27,16 @@ def find_index(wordbag):
             tuples.append([i, wordbag[0][i]])
     return tuples
 
+def compress(array_list):
+    longest_i = [[0]]
+    for i in array_list:
+        if len(i[0]) > len(longest_i[0]):
+            longest_i = i
+    x = np.ndarray(shape=(len(array_list), len(longest_i[0])))
+    #somehow turn the array list into one big array!
+    print()
+    return x
+
 # These functions were taken from insightsbot.com
 # Entry titled "Bag of Words Algorithm in Python Introduction"
 # Published 12/09/2017

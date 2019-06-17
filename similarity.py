@@ -1,5 +1,5 @@
 import similarity_util as su
-
+from sklearn import cluster as c
 class SimilarityIndex:
     def __init__(self, data):
         self.data = data
@@ -12,8 +12,9 @@ class SimilarityIndex:
         for i in wordbags:
             if i[0].any():
                 print(su.find_index(i))
-            print()
-            print()
+        wordbags = su.compress(wordbags)
+        km = c.KMeans()
+        km.fit(wordbags)
         print()
 
     def build_vocabularies(self):
