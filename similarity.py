@@ -12,9 +12,9 @@ class SimilarityIndex:
         for i in wordbags:
             if i[0].any():
                 print(su.find_index(i))
-        wordbags = su.compress(wordbags)
+        wb = su.compress(wordbags)
         km = c.KMeans()
-        km.fit(wordbags)
+        km.fit(wb)
         print()
 
     def build_vocabularies(self):

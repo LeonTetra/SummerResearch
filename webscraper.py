@@ -266,6 +266,7 @@ class DatabaseReader:
 
     @staticmethod
     def __read_scidi(driver, wait):
+        driver.implicitly_wait(10)
         if '/search/' in str(driver.current_url):
             article = wait.until(EC.presence_of_element_located((By.ID, 'aa-srp-result-list-title-1')))
             article.click()
