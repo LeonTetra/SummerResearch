@@ -8,14 +8,9 @@ class SimilarityIndex:
     def submit_to_check(self, result):
         wordbags = []
         for i in self.vocabularies:
-            wordbags.append(i.create_bag_of_words([result.content]))
-        for i in wordbags:
-            if i[0].any():
-                print(su.find_index(i))
-        wb = su.compress(wordbags)
-        km = c.KMeans()
-        km.fit(wb)
-        print()
+            #wordbags.append(i.create_bag_of_words("Loading"))
+            wordbags.append(i.create_bag_of_words(result.content))
+            print()
 
     def build_vocabularies(self):
         vocabs = []

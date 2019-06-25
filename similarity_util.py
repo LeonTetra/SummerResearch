@@ -11,14 +11,17 @@ class Result:
 
 class Vocabulary:
     def __init__(self, sentences):
+        self.words = tokenize_sentences(sentences)
         from sklearn.feature_extraction.text import CountVectorizer
         self.vectorizer = CountVectorizer(analyzer="word", tokenizer=None, preprocessor=None, stop_words=None,
                                      max_features=5000)
         train_data_features = self.vectorizer.fit_transform(sentences)
 
-    def create_bag_of_words(self, text):
+    def create_bag_of_words_vector(self, text):
         return self.vectorizer.transform(text).toarray()
 
+    def create_bag_of_words(self, text):
+        return bagofwords(text, self.words)
 
 def find_index(wordbag):
     tuples = []
@@ -50,9 +53,16 @@ def tokenize_sentences(sentences):
     for sentence in sentences:
         w = extract_words(sentence)
         words.extend(w)
+    words = remove_repeats(words)
+    return sorted(words)
 
-    words = sorted(list(set(words)))
-    return words
+
+def remove_repeats(words):
+    cleaned = []
+    for w in words:
+        if w not in cleaned:
+            cleaned.append(w)
+    return cleaned
 
 
 def bagofwords(sentence, words):
