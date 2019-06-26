@@ -8,9 +8,12 @@ class SimilarityIndex:
     def submit_to_check(self, result):
         wordbags = []
         for i in self.vocabularies:
-            #wordbags.append(i.create_bag_of_words("Loading"))
             wordbags.append(i.create_bag_of_words(result.content))
-            print()
+        for i in wordbags:
+            s = sum(i)
+            print(s)
+            if s > len(result.content) / 4:
+                print('sum of shared words greater than half of half the length of submitted')
 
     def build_vocabularies(self):
         vocabs = []
