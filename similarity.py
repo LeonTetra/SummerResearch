@@ -11,9 +11,7 @@ class SimilarityIndex:
             wordbags.append(i.create_bag_of_words(result.content))
         for i in wordbags:
             s = sum(i)
-            print(s)
-            if s > len(result.content) / 4:
-                print('sum of shared words greater than half of half the length of submitted')
+            sim_index = s / su.num_words(result.content)
 
     def build_vocabularies(self):
         vocabs = []

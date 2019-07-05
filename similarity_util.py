@@ -47,6 +47,9 @@ def extract_words(sentence):
     words_cleaned = [w.lower() for w in words if w not in ignore_words]
     return words_cleaned
 
+def num_words(words):
+    test = len(re.sub("[^\w]", " ", words).split())
+    return test
 
 def tokenize_sentences(sentences):
     words = []
