@@ -7,11 +7,14 @@ class SimilarityIndex:
 
     def submit_to_check(self, result):
         wordbags = []
+        indices = []
         for i in self.vocabularies:
             wordbags.append(i.create_bag_of_words(result.content))
         for i in wordbags:
             s = sum(i)
             sim_index = s / su.num_words(result.content)
+            indices.append(sim_index)
+        return indices
 
     def build_vocabularies(self):
         vocabs = []
