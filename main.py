@@ -16,7 +16,7 @@ def main():
     ws.append_to_data(test)
     s = sim.SimilarityIndex(ws.data)
     inds = s.submit_to_check(test)
-    ml = pm.MLPlagiarismChecker(inds)
+    ml = pm.MLPlagiarismChecker(ws.data, test, inds)
 
 
 if __name__ == "__main__":
