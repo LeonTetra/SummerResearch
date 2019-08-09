@@ -13,7 +13,7 @@ class MLPlagiarismChecker:
         model = km.fit(X)
         cluster_labels = model.predict(X)
         cent = model.cluster_centers_
-        self.plot(model, cluster_labels, cent, dfs)
+       # self.plot(model, cluster_labels, cent, dfs)
 
     def build_dataframes(self):
         print()
@@ -21,12 +21,12 @@ class MLPlagiarismChecker:
         df['Similarity Index'] = pandas.Series(self.sim_indices)
         return df
 
-    def plot(self, model, cluster_labels, cent, df):
-        kmeans = pandas.DataFrame(cluster_labels)
-        for i in df:
-            print()
-            for j in df:
-                scatter = plt.scatter(df[i], df[j], c=kmeans[0])
-                plt.colorbar(scatter)
-                plt.savefig(i + '_' + j + '.png')
-                plt.clf()
+    # def plot(self, model, cluster_labels, cent, df):
+    #     kmeans = pandas.DataFrame(cluster_labels)
+    #     for i in df:
+    #         print()
+    #         for j in df:
+    #             scatter = plt.scatter(df[i], df[j], c=kmeans[0])
+    #             plt.colorbar(scatter)
+    #             plt.savefig(i + '_' + j + '.png')
+    #             plt.clf()
