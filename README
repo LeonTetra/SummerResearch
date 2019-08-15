@@ -1,0 +1,9 @@
+The web scraper needs to have an AccessNET Username and password to work.
+It will take these from a file named "access.txt" where the first text line is the username
+and the second text line is the password
+
+e.g.
+access.txt
+----------
+tug045999
+password
